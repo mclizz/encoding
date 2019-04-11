@@ -183,8 +183,8 @@ happening.
 <a for=/>error mode</a> <var>mode</var>, run these steps:
 
 <ol>
- <li><p>If <var>mode</var> is not given, set it to "<code>replacement</code>", if
- <var>encoderDecoder</var> is a <a for=/>decoder</a>, and "<code>fatal</code>" otherwise.
+ <li><p>If <var>mode</var> is not given, then set it to "<code>replacement</code>", if
+ <var>encoderDecoder</var> is a <a for=/>decoder</a>, or "<code>fatal</code>" otherwise.
 
  <li><p>Let <var>encoderDecoderInstance</var> be a new <var>encoderDecoder</var>.
 
@@ -1080,6 +1080,7 @@ interface mixin TextDecoderCommon {
 <p>These objects also have an associated
 <dfn id=concept-td-serialize for=TextDecoderCommon>serialize stream</dfn> algorithm, that given a
 <a for=/>stream</a> <var>stream</var>, runs these steps:
+<!-- TODO: turn this into an algorithm taking a TextDecoderCommon and stream -->
 
 <ol>
  <li><p>Let <var>output</var> be the empty string.
@@ -1118,17 +1119,17 @@ control.
 <hr>
 
 <p>The <dfn attribute id=dom-textdecoder-encoding for=TextDecoderCommon><code>encoding</code></dfn>
-attribute's getter, when invoked, must return this object's <a for=TextDecoderCommon>encoding</a>'s
+attribute's getter must return <b>this</b>'s <a for=TextDecoderCommon>encoding</a>'s
 <a for=encoding>name</a> in <a>ASCII lowercase</a>.
 
 <p>The <dfn attribute id=dom-textdecoder-fatal for=TextDecoderCommon><code>fatal</code></dfn>
-attribute's getter, when invoked, must return true if this object's
-<a for=TextDecoderCommon>error mode</a> is "<code>fatal</code>", and false otherwise.
+attribute's getter must return true if <b>this</b>'s <a for=TextDecoderCommon>error mode</a> is
+"<code>fatal</code>", or false otherwise.
 
 <p>The
 <dfn attribute id=dom-textdecoder-ignorebom for=TextDecoderCommon><code>ignoreBOM</code></dfn>
-attribute's getter, when invoked, must return true if this object's
-<a for=TextDecoderCommon>ignore BOM flag</a> is set, and false otherwise.
+attribute's getter must return true if <b>this</b>'s <a for=TextDecoderCommon>ignore BOM flag</a> is
+set, or false otherwise.
 
 
 <h3 id=interface-textdecoder>Interface {{TextDecoder}}</h3>
@@ -1198,6 +1199,7 @@ string += decoder.decode(); // end-of-stream</code></pre>
 <p>The
 <dfn constructor for=TextDecoder id=dom-textdecoder><code>TextDecoder(<var>label</var>, <var>options</var>)</code></dfn>
 constructor, when invoked, must run these steps:
+<!-- TODO: rewrite constructor somehow -->
 
 <ol>
  <li><p>Let <var>encoding</var> be the result of <a>getting an encoding</a> from <var>label</var>.
@@ -1221,18 +1223,18 @@ constructor, when invoked, must run these steps:
 method, when invoked, must run these steps:
 
 <ol>
- <li><p>If the <a for=TextDecoder>do not flush flag</a> is unset, set <a for=TextDecoder>decoder</a>
- to a new <a for=TextDecoderCommon>encoding</a>'s <a for=/>decoder</a>, set
- <a for=TextDecoder>stream</a> to a new <a for=/>stream</a>, and unset the
- <a for=TextDecoderCommon>BOM seen flag</a>.
+ <li><p>If <b>this</b>'s <a for=TextDecoder>do not flush flag</a> is unset, then set <b>this</b>'s
+ <a for=TextDecoder>decoder</a> to a new <a for=TextDecoderCommon>encoding</a>'s
+ <a for=/>decoder</a>, set <b>this</b>'s <a for=TextDecoder>stream</a> to a new <a for=/>stream</a>,
+ and unset <b>this</b>'s <a for=TextDecoderCommon>BOM seen flag</a>.
 
- <li><p>If <var>options</var>'s <code>stream</code> is true, set the
- <a for=TextDecoder>do not flush flag</a>, and unset the <a for=TextDecoder>do not flush flag</a>
- otherwise.
+ <li><p>If <var>options</var>'s <code>stream</code> is true, then set <b>this</b>'s
+ <a for=TextDecoder>do not flush flag</a>, or unset <b>this</b>'s
+ <a for=TextDecoder>do not flush flag</a> otherwise.
 
  <li>
   <p>If <var>input</var> is given, then <a>push</a> a
-  <a lt="get a copy of the buffer source">copy of</a> <var>input</var> to
+  <a lt="get a copy of the buffer source">copy of</a> <var>input</var> to <b>this</b>'s
   <a for=TextDecoder>stream</a>.
 
   <p class=note>Implementations are strongly encouraged to use an implementation strategy that
@@ -1245,11 +1247,12 @@ method, when invoked, must run these steps:
   <p>While true:
 
   <ol>
-   <li><p>Let <var>token</var> be the result of <a>reading</a> from <a for=TextDecoder>stream</a>.
+   <li><p>Let <var>token</var> be the result of <a>reading</a> from <b>this</b>'s
+   <a for=TextDecoder>stream</a>.
 
    <li>
-    <p>If <var>token</var> is <a>end-of-stream</a> and the <a for=TextDecoder>do not flush flag</a>
-    is set, then return <var>output</var>,
+    <p>If <var>token</var> is <a>end-of-stream</a> and <b>this</b>'s
+    <a for=TextDecoder>do not flush flag</a> is set, then return <var>output</var>,
     <a lt="serialize stream" for=TextDecoderCommon>serialized</a>.
 
     <p class=note>The way streaming works is to not handle <a>end-of-stream</a> here when the
@@ -1262,8 +1265,8 @@ method, when invoked, must run these steps:
 
     <ol>
      <li><p>Let <var>result</var> be the result of <a>processing</a> <var>token</var> for
-     <a for=TextDecoder>decoder</a>, <a for=TextDecoder>stream</a>, <var>output</var>, and
-     <a for=TextDecoderCommon>error mode</a>.
+     <b>this</b>'s <a for=TextDecoder>decoder</a>, <b>this</b>'s <a for=TextDecoder>stream</a>,
+     <var>output</var>, and <b>this</b>'s <a for=TextDecoderCommon>error mode</a>.
 
      <li><p>If <var>result</var> is <a>finished</a>, then return <var>output</var>,
      <a lt="serialize stream" for=TextDecoderCommon>serialized</a>.
@@ -1286,7 +1289,7 @@ interface mixin TextEncoderCommon {
 {{TextEncoder}} and {{TextEncoderStream}} objects.
 
 <p>The <dfn attribute id=dom-textencoder-encoding for=TextEncoderCommon><code>encoding</code></dfn>
-attribute's getter, when invoked, must return "<code>utf-8</code>".
+attribute's getter must return "<code>utf-8</code>".
 
 
 <h3 id=interface-textencoder>Interface {{TextEncoder}}</h3>
@@ -1332,6 +1335,7 @@ requires buffering of scalar values.
 
 <p>The <dfn constructor for=TextEncoder id=dom-textencoder><code>TextEncoder()</code></dfn>
 constructor, when invoked, must return a new {{TextEncoder}} object.
+<!-- TODO: what should this say in the new world? -->
 
 <p>The <dfn method for=TextEncoder><code>encode(<var>input</var>)</code></dfn> method, when invoked,
 must run these steps:
@@ -1467,11 +1471,11 @@ interface mixin GenericTransformStream {
 <p>An object that includes {{GenericTransformStream}} has an associated
 <dfn for=GenericTransformStream>transform</dfn> of type {{TransformStream}}.
 
-<p>The <dfn attribute for=GenericTransformStream><code>readable</code></dfn> attribute's getter,
-when invoked, must return this object's <a for=GenericTransformStream>transform</a>.\[[readable]].
+<p>The <dfn attribute for=GenericTransformStream><code>readable</code></dfn> attribute's getter must
+return <b>this</b>'s <a for=GenericTransformStream>transform</a>.\[[readable]].
 
-<p>The <dfn attribute for=GenericTransformStream><code>writable</code></dfn> attribute's getter,
-when invoked, must return this object's <a for=GenericTransformStream>transform</a>.\[[writable]].
+<p>The <dfn attribute for=GenericTransformStream><code>writable</code></dfn> attribute's getter must
+return <b>this</b>'s <a for=GenericTransformStream>transform</a>.\[[writable]].
 
 
 <h3 id=interface-textdecoderstream>Interface {{TextDecoderStream}}</h3>
@@ -1485,8 +1489,8 @@ TextDecoderStream includes TextDecoderCommon;
 TextDecoderStream includes GenericTransformStream;
 </pre>
 
-<p>A {{TextDecoderStream}} object has an associated
-<dfn for=TextDecoderStream>decoder</dfn>, and <dfn for=TextDecoderStream>stream</dfn>.
+<p>A {{TextDecoderStream}} object has an associated <dfn for=TextDecoderStream>decoder</dfn> and
+<dfn for=TextDecoderStream>stream</dfn>.
 
 <dl class=domintro>
  <dt><code><var>decoder</var> = new
@@ -1538,6 +1542,7 @@ byteReadable
 <p>The
 <dfn constructor for=TextDecoderStream id=dom-textdecoderstream><code>TextDecoderStream(<var>label</var>,
 <var>options</var>)</code></dfn> constructor, when invoked, must run these steps:
+<!-- TODO: figure out constructors -->
 
 <ol>
  <li><p>Let <var>encoding</var> be the result of <a>getting an encoding</a> from <var>label</var>.
@@ -1665,8 +1670,8 @@ TextEncoderStream includes TextEncoderCommon;
 TextEncoderStream includes GenericTransformStream;
 </pre>
 
-<p>A {{TextEncoderStream}} object has an associated <dfn for=TextEncoderStream>encoder</dfn>,
-and <dfn for=TextEncoderStream>pending high surrogate</dfn> (initially null).
+<p>A {{TextEncoderStream}} object has an associated <dfn for=TextEncoderStream>encoder</dfn> and
+<dfn for=TextEncoderStream>pending high surrogate</dfn> (initially null).
 
 <p class="note no-backref">A {{TextEncoderStream}} object offers no <var>label</var> argument as it
 only supports <a>UTF-8</a>.
@@ -1701,6 +1706,7 @@ textReadable
 <p>The
 <dfn constructor for=TextEncoderStream id=dom-textencoderstream><code>TextEncoderStream()</code></dfn>
 constructor, when invoked, must run these steps:
+<!-- TODO: figure out constructors -->
 
 <ol>
  <li><p>Let <var>enc</var> be a new {{TextEncoderStream}} object.
