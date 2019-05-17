@@ -183,8 +183,8 @@ happening.
 <a for=/>error mode</a> <var>mode</var>, run these steps:
 
 <ol>
- <li><p>If <var>mode</var> is not given, then set it to "<code>replacement</code>", if
- <var>encoderDecoder</var> is a <a for=/>decoder</a>, or "<code>fatal</code>" otherwise.
+ <li><p>If <var>mode</var> is not given, then set it to "<code>replacement</code>" if
+ <var>encoderDecoder</var> is a <a for=/>decoder</a>, otherwise "<code>fatal</code>".
 
  <li><p>Let <var>encoderDecoderInstance</var> be a new <var>encoderDecoder</var>.
 
@@ -212,9 +212,9 @@ happening.
 <a for=/>error mode</a> <var>mode</var>, run these steps:
 
 <ol>
- <li><p>If <var>mode</var> is not given, set it to "<code>replacement</code>", if
- <var>encoderDecoderInstance</var> is a <a for=/>decoder</a> instance, and "<code>fatal</code>"
- otherwise.
+ <li><p>If <var>mode</var> is not given, then set it to "<code>replacement</code>" if
+ <var>encoderDecoderInstance</var> is a <a for=/>decoder</a> instance, otherwise
+ "<code>fatal</code>".
 
  <li><p>Let <var>result</var> be the result of running <var>encoderDecoderInstance</var>'s
  <a>handler</a> on <var>input</var> and <var>token</var>.
@@ -273,9 +273,9 @@ from a string <var>label</var>, run these steps:
  <li><p>Remove any leading and trailing <a>ASCII whitespace</a> from
  <var>label</var>.
 
- <li><p>If <var>label</var> is an <a>ASCII case-insensitive</a>
- match for any of the <a>labels</a> listed in the table
- below, return the corresponding <a for=/>encoding</a>, and failure otherwise.
+ <li><p>If <var>label</var> is an <a>ASCII case-insensitive</a> match for any of the <a>labels</a>
+ listed in the table below, then return the corresponding <a for=/>encoding</a>; otherwise return
+ failure.
 </ol>
 
 <p class="note no-backref">This is a more basic and restrictive algorithm of mapping <a>labels</a>
@@ -866,7 +866,7 @@ fallback encoding <var>encoding</var>, run these steps:
 <ol>
  <li><p>Let <var>buffer</var> be an empty byte sequence.
 
- <li><p>Let <var>BOM seen flag</var> be unset.
+ <li><p>Let <var>BOM seen</var> be false.
 
  <li><p><a>Read</a> bytes from <var>stream</var>
  into <var>buffer</var> until either <var>buffer</var> contains three bytes or
@@ -877,7 +877,7 @@ fallback encoding <var>encoding</var>, run these steps:
   one and going down, if the first bytes of <var>buffer</var> match
   all the bytes given in the first column, then set <var>encoding</var>
   to the <a for=/>encoding</a> given in the cell in the second column of
-  that row and set <var>BOM seen flag</var>.
+  that row and set <var>BOM seen</var> to true.
 
   <table>
    <tbody><tr><th>Byte order mark<th>Encoding
@@ -890,12 +890,10 @@ fallback encoding <var>encoding</var>, run these steps:
   than anything else. In a context where HTTP is used this is in violation of the semantics of the
   `<code>Content-Type</code>` header.
 
- <li><p>If <var>BOM seen flag</var> is unset,
- <a>prepend</a> <var>buffer</var> to <var>stream</var>.
+ <li><p>If <var>BOM seen</var> is false, then <a>prepend</a> <var>buffer</var> to <var>stream</var>.
 
- <li><p>Otherwise, if <var>BOM seen flag</var> is set, <var>encoding</var> is not
- <a>UTF-8</a>, and <var>buffer</var> contains three bytes,
- <a>prepend</a> the last byte of <var>buffer</var> to
+ <li><p>Otherwise, if <var>BOM seen</var> is true, <var>encoding</var> is not <a>UTF-8</a>, and
+ <var>buffer</var> contains three bytes, <a>prepend</a> the last byte of <var>buffer</var> to
  <var>stream</var>.
 
  <li><p>Let <var>output</var> be a code point <a for=/>stream</a>.
@@ -1072,15 +1070,13 @@ interface mixin TextDecoderCommon {
 <p>The {{TextDecoderCommon}} interface mixin defines common attributes that are shared between
 {{TextDecoder}} and {{TextDecoderStream}} objects. These objects have an associated
 <dfn id=textdecoder-encoding for=TextDecoderCommon>encoding</dfn>,
-<dfn id=textdecoder-ignore-bom-flag for=TextDecoderCommon>ignore BOM flag</dfn> (initially unset),
-<dfn id=textdecoder-bom-seen-flag for=TextDecoderCommon>BOM seen flag</dfn> (initially unset), and
-<dfn id=textdecoder-error-mode for=TextDecoderCommon>error mode</dfn> (initially
+<dfn id=textdecoder-ignore-bom-flag for=TextDecoderCommon>ignore BOM</dfn> (boolean, initially
+unset), <dfn id=textdecoder-bom-seen-flag for=TextDecoderCommon>BOM seen</dfn> (boolean, initially
+unset), and <dfn id=textdecoder-error-mode for=TextDecoderCommon>error mode</dfn> (initially
 "<code>replacement</code>").
 
-<p>These objects also have an associated
-<dfn id=concept-td-serialize for=TextDecoderCommon>serialize stream</dfn> algorithm, that given a
-<a for=/>stream</a> <var>stream</var>, runs these steps:
-<!-- TODO: turn this into an algorithm taking a TextDecoderCommon and stream -->
+<p>The <dfn id=concept-td-serialize>serialize stream</dfn> algorithm, given a {{TextDecoderCommon}}
+<var>dec</var> and a <a for=/>stream</a> <var>stream</var>, runs these steps:
 
 <ol>
  <li><p>Let <var>output</var> be the empty string.
@@ -1092,15 +1088,16 @@ interface mixin TextDecoderCommon {
    <li><p>Let <var>token</var> be the result of <a>reading</a> from <var>stream</var>.
 
    <li>
-    <p>If <a for=TextDecoderCommon>encoding</a> is <a>UTF-8</a>, <a>UTF-16BE</a>, or
-    <a>UTF-16LE</a>, and <a for=TextDecoderCommon>ignore BOM flag</a> and
-    <a for=TextDecoderCommon>BOM seen flag</a> are unset, then:
+    <p>If <var>dec</var>'s <a for=TextDecoderCommon>encoding</a> is <a>UTF-8</a>, <a>UTF-16BE</a>,
+    or <a>UTF-16LE</a>, and <var>dec</var>'s <a for=TextDecoderCommon>ignore BOM</a> and
+    <a for=TextDecoderCommon>BOM seen</a> are false, then:
 
     <ol>
-     <li><p>If <var>token</var> is U+FEFF, then set <a for=TextDecoderCommon>BOM seen flag</a>.
+     <li><p>If <var>token</var> is U+FEFF, then set <var>dec</var>'s
+     <a for=TextDecoderCommon>BOM seen</a> to true.
 
-     <li><p>Otherwise, if <var>token</var> is not <a>end-of-stream</a>, then set
-     <a for=TextDecoderCommon>BOM seen flag</a> and append <var>token</var> to <var>output</var>.
+     <li><p>Otherwise, if <var>token</var> is not <a>end-of-stream</a>, set <var>dec</var>'s
+     <a for=TextDecoderCommon>BOM seen</a> to true and append <var>token</var> to <var>output</var>.
 
      <li><p>Otherwise, return <var>output</var>.
     </ol>
@@ -1124,12 +1121,11 @@ attribute's getter must return <b>this</b>'s <a for=TextDecoderCommon>encoding</
 
 <p>The <dfn attribute id=dom-textdecoder-fatal for=TextDecoderCommon><code>fatal</code></dfn>
 attribute's getter must return true if <b>this</b>'s <a for=TextDecoderCommon>error mode</a> is
-"<code>fatal</code>", or false otherwise.
+"<code>fatal</code>", otherwise false.
 
 <p>The
 <dfn attribute id=dom-textdecoder-ignorebom for=TextDecoderCommon><code>ignoreBOM</code></dfn>
-attribute's getter must return true if <b>this</b>'s <a for=TextDecoderCommon>ignore BOM flag</a> is
-set, or false otherwise.
+attribute's getter must return <b>this</b>'s <a for=TextDecoderCommon>ignore BOM</a>.
 
 
 <h3 id=interface-textdecoder>Interface {{TextDecoder}}</h3>
@@ -1153,8 +1149,9 @@ TextDecoder includes TextDecoderCommon;
 </pre>
 
 <p>A {{TextDecoder}} object has an associated <dfn for=TextDecoder>decoder</dfn>,
-<dfn for=TextDecoder>stream</dfn>, and <dfn for=TextDecoder>do not flush flag</dfn> (initially
-unset).
+<dfn for=TextDecoder>stream</dfn>, and
+<dfn for=TextDecoder id=textdecoder-do-not-flush-flag>do not flush</dfn> (a boolean; initially
+false).
 
 <dl class=domintro>
  <dt><code><var>decoder</var> = new <a constructor for=TextDecoder lt=TextDecoder()>TextDecoder([<var>label</var> = "utf-8" [, <var>options</var>]])</a></code>
@@ -1169,12 +1166,11 @@ unset).
  <dd><p>Returns <a for=TextDecoderCommon>encoding</a>'s <a>name</a>, lowercased.
 
  <dt><code><var>decoder</var> . <a attribute for=TextDecoderCommon>fatal</a></code>
- <dd><p>Returns true if <a for=TextDecoderCommon>error mode</a> is "<code>fatal</code>", and
- false otherwise.
+ <dd><p>Returns true if <a for=TextDecoderCommon>error mode</a> is "<code>fatal</code>", otherwise
+ false.
 
  <dt><code><var>decoder</var> . <a attribute for=TextDecoderCommon>ignoreBOM</a></code>
- <dd><p>Returns true if <a for=TextDecoderCommon>ignore BOM flag</a> is set, and false
- otherwise.
+ <dd><p>Returns <a for=TextDecoderCommon>ignore BOM</a>.
 
  <dt><code><var>decoder</var> . <a method for=TextDecoder lt=decode()>decode([<var>input</var> [, <var>options</var>]])</a></code>
  <dd>
@@ -1199,38 +1195,32 @@ string += decoder.decode(); // end-of-stream</code></pre>
 <p>The
 <dfn constructor for=TextDecoder id=dom-textdecoder><code>TextDecoder(<var>label</var>, <var>options</var>)</code></dfn>
 constructor, when invoked, must run these steps:
-<!-- TODO: rewrite constructor somehow -->
 
 <ol>
  <li><p>Let <var>encoding</var> be the result of <a>getting an encoding</a> from <var>label</var>.
 
  <li><p>If <var>encoding</var> is failure or <a>replacement</a>, then <a>throw</a> a {{RangeError}}.
 
- <li><p>Let <var>dec</var> be a new {{TextDecoder}} object.
+ <li><p>Set <b>this</b>'s <a for=TextDecoderCommon>encoding</a> to <var>encoding</var>.
 
- <li><p>Set <var>dec</var>'s <a for=TextDecoderCommon>encoding</a> to <var>encoding</var>.
-
- <li><p>If <var>options</var>'s <code>fatal</code> member is true, then set <var>dec</var>'s
+ <li><p>If <var>options</var>'s <code>fatal</code> member is true, then set <b>this</b>'s
  <a for=TextDecoderCommon>error mode</a> to "<code>fatal</code>".
 
- <li><p>If <var>options</var>'s <code>ignoreBOM</code> member is true, then set <var>dec</var>'s
- <a for=TextDecoderCommon>ignore BOM flag</a>.
-
- <li><p>Return <var>dec</var>.
+ <li><p>Set <b>this</b>'s <a for=TextDecoderCommon>ignore BOM</a> to <var>options</var>'s
+ <code>ignoreBOM</code>.
 </ol>
 
 <p>The <dfn method for=TextDecoder><code>decode(<var>input</var>, <var>options</var>)</code></dfn>
 method, when invoked, must run these steps:
 
 <ol>
- <li><p>If <b>this</b>'s <a for=TextDecoder>do not flush flag</a> is unset, then set <b>this</b>'s
+ <li><p>If <b>this</b>'s <a for=TextDecoder>do not flush</a> is false, then set <b>this</b>'s
  <a for=TextDecoder>decoder</a> to a new <a for=TextDecoderCommon>encoding</a>'s
  <a for=/>decoder</a>, set <b>this</b>'s <a for=TextDecoder>stream</a> to a new <a for=/>stream</a>,
- and unset <b>this</b>'s <a for=TextDecoderCommon>BOM seen flag</a>.
+ and set <b>this</b>'s <a for=TextDecoderCommon>BOM seen</a> to false.
 
- <li><p>If <var>options</var>'s <code>stream</code> is true, then set <b>this</b>'s
- <a for=TextDecoder>do not flush flag</a>, or unset <b>this</b>'s
- <a for=TextDecoder>do not flush flag</a> otherwise.
+ <li><p>Set <b>this</b>'s <a for=TextDecoder>do not flush</a> to <var>options</var>'s
+ <code>stream</code>.
 
  <li>
   <p>If <var>input</var> is given, then <a>push</a> a
@@ -1252,13 +1242,13 @@ method, when invoked, must run these steps:
 
    <li>
     <p>If <var>token</var> is <a>end-of-stream</a> and <b>this</b>'s
-    <a for=TextDecoder>do not flush flag</a> is set, then return <var>output</var>,
-    <a lt="serialize stream" for=TextDecoderCommon>serialized</a>.
+    <a for=TextDecoder>do not flush</a> is true, then return the result of running
+    <a>serialize stream</a> with <b>this</b> and <var>output</var>.
 
     <p class=note>The way streaming works is to not handle <a>end-of-stream</a> here when the
-    <a for=TextDecoder>do not flush flag</a> is set and to not unset that flag. That way in a
-    subsequent invocation <a for=TextDecoder>decoder</a> is not set anew in the first step of the
-    algorithm and its state is preserved.
+    <a for=TextDecoder>do not flush</a> is true and to not set it to false. That way in a subsequent
+    invocation <a for=TextDecoder>decoder</a> is not set anew in the first step of the algorithm and
+    its state is preserved.
 
    <li>
     <p>Otherwise:
@@ -1268,8 +1258,8 @@ method, when invoked, must run these steps:
      <b>this</b>'s <a for=TextDecoder>decoder</a>, <b>this</b>'s <a for=TextDecoder>stream</a>,
      <var>output</var>, and <b>this</b>'s <a for=TextDecoderCommon>error mode</a>.
 
-     <li><p>If <var>result</var> is <a>finished</a>, then return <var>output</var>,
-     <a lt="serialize stream" for=TextDecoderCommon>serialized</a>.
+     <li><p>If <var>result</var> is <a>finished</a>, then return the result of running
+     <a>serialize stream</a> with <b>this</b> and <var>output</var>.
 
      <li><p>Otherwise, if <var>result</var> is <a>error</a>, then <a lt=throw>throw</a> a
      {{TypeError}}.
@@ -1334,8 +1324,7 @@ requires buffering of scalar values.
 </dl>
 
 <p>The <dfn constructor for=TextEncoder id=dom-textencoder><code>TextEncoder()</code></dfn>
-constructor, when invoked, must return a new {{TextEncoder}} object.
-<!-- TODO: what should this say in the new world? -->
+constructor, when invoked, must do nothing.
 
 <p>The <dfn method for=TextEncoder><code>encode(<var>input</var>)</code></dfn> method, when invoked,
 must run these steps:
@@ -1509,8 +1498,7 @@ TextDecoderStream includes GenericTransformStream;
  false otherwise.
 
  <dt><code><var>decoder</var> . <a attribute for=TextDecoderCommon>ignoreBOM</a></code>
- <dd><p>Returns true if <a for=TextDecoderCommon>ignore BOM flag</a> is set, and false
- otherwise.
+ <dd><p>Returns <a for=TextDecoderCommon>ignore BOM</a>.
 
  <dt><code><var>decoder</var> . <a attribute for=GenericTransformStream>readable</a></code>
  <dd>
@@ -1542,44 +1530,37 @@ byteReadable
 <p>The
 <dfn constructor for=TextDecoderStream id=dom-textdecoderstream><code>TextDecoderStream(<var>label</var>,
 <var>options</var>)</code></dfn> constructor, when invoked, must run these steps:
-<!-- TODO: figure out constructors -->
 
 <ol>
  <li><p>Let <var>encoding</var> be the result of <a>getting an encoding</a> from <var>label</var>.
 
  <li><p>If <var>encoding</var> is failure or <a>replacement</a>, then <a>throw</a> a {{RangeError}}.
 
- <li><p>Let <var>dec</var> be a new {{TextDecoderStream}} object.
+ <li><p>Set <b>this</b>'s <a for=TextDecoderCommon>encoding</a> to <var>encoding</var>.
 
- <li><p>Set <var>dec</var>'s <a for=TextDecoderCommon>encoding</a> to <var>encoding</var>.
-
- <li><p>If <var>options</var>'s <code>fatal</code> member is true, then set <var>dec</var>'s
+ <li><p>If <var>options</var>'s <code>fatal</code> member is true, then set <b>this</b>'s
  <a for=TextDecoderCommon>error mode</a> to "<code>fatal</code>".
 
- <li><p>If <var>options</var>'s <code>ignoreBOM</code> member is true, then set <var>dec</var>'s
- <a for=TextDecoderCommon>ignore BOM flag</a>.
+ <li><p>set <b>this</b>'s <a for=TextDecoderCommon>ignore BOM</a> to <var>options</var>'s
+ <code>ignoreBOM</code>.
 
- <li>
-  <p>Set <var>dec</var>'s <a for=TextDecoderStream>decoder</a> to a new <a for=/>decoder</a>
-  for <var>dec</var>'s <a for=TextDecoderCommon>encoding</a>, and set <var>dec</var>'s
-  <a for=TextDecoderStream>stream</a> to a new <a for=/>stream</a>.
+ <li><p>Set <b>this</b>'s <a for=TextDecoderStream>decoder</a> to a new <a for=/>decoder</a> for
+ <b>this</b>'s <a for=TextDecoderCommon>encoding</a>, and set <b>this</b>'s
+ <a for=TextDecoderStream>stream</a> to a new <a for=/>stream</a>.
 
  <li><p>Let <var>startAlgorithm</var> be an algorithm that takes no arguments and returns nothing.
 
  <li><p>Let <var>transformAlgorithm</var> be an algorithm which takes a <var>chunk</var> argument
- and runs the <a>decode and enqueue a chunk</a> algorithm with <var>dec</var> and
- <var>chunk</var>.
+ and runs the <a>decode and enqueue a chunk</a> algorithm with <b>this</b> and <var>chunk</var>.
 
- <li><p>Let <var>flushAlgorithm</var> be an algorithm which takes no arguments and runs the <a>flush
- and enqueue</a> algorithm with <var>dec</var>.
+ <li><p>Let <var>flushAlgorithm</var> be an algorithm which takes no arguments and runs the
+ <a>flush and enqueue</a> algorithm with <b>this</b>.
 
  <li><p>Let <var>transform</var> be the result of calling
  <a abstract-op>CreateTransformStream</a>(<var>startAlgorithm</var>, <var>transformAlgorithm</var>,
  <var>flushAlgorithm</var>).
 
- <li><p>Set <var>dec</var>'s <a for=GenericTransformStream>transform</a> to <var>transform</var>.
-
- <li><p>Return <var>dec</var>.
+ <li><p>Set <b>this</b>'s <a for=GenericTransformStream>transform</a> to <var>transform</var>.
 </ol>
 
 <p>The <dfn>decode and enqueue a chunk</dfn> algorithm, given a {{TextDecoderStream}} object
@@ -1609,8 +1590,8 @@ byteReadable
    <li>
     <p>If <var>token</var> is <a>end-of-stream</a>, run these steps:
     <ol>
-     <li><p>Let <var>outputChunk</var> be <var>output</var>,
-     <a lt="serialize stream" for=TextDecoderCommon>serialized</a>.
+     <li><p>Let <var>outputChunk</var> be the result of running <a>serialize stream</a> with
+     <var>dec</var> and <var>output</var>.
 
      <li><p>if <var>outputChunk</var> is non-empty, call
      <a abstract-op>TransformStreamDefaultControllerEnqueue</a>(<var>controller</var>,
@@ -1642,8 +1623,8 @@ byteReadable
 
  <li><p>If <var>result</var> is <a>finished</a>, run these steps:
  <ol>
-  <li><p>Let <var>outputChunk</var> be <var>output</var>,
-  <a lt="serialize stream" for=TextDecoderCommon>serialized</a>.
+  <li><p>Let <var>outputChunk</var> be the result of running <a>serialize stream</a> with
+  <var>dec</var> and <var>output</var>.
 
   <li><p>Let <var>controller</var> be <var>dec</var>'s
   <a for=GenericTransformStream>transform</a>.\[[transformStreamController]].
@@ -1706,29 +1687,24 @@ textReadable
 <p>The
 <dfn constructor for=TextEncoderStream id=dom-textencoderstream><code>TextEncoderStream()</code></dfn>
 constructor, when invoked, must run these steps:
-<!-- TODO: figure out constructors -->
 
 <ol>
- <li><p>Let <var>enc</var> be a new {{TextEncoderStream}} object.
-
- <li><p>Set <var>enc</var>'s <a for=TextEncoderStream>encoder</a> to <a>UTF-8</a>'s
+ <li><p>Set <b>this</b>'s <a for=TextEncoderStream>encoder</a> to <a>UTF-8</a>'s
  <a for=/>encoder</a>.
 
  <li><p>Let <var>startAlgorithm</var> be an algorithm that takes no arguments and returns nothing.
 
  <li><p>Let <var>transformAlgorithm</var> be an algorithm which takes a <var>chunk</var> argument
- and runs the <a>encode and enqueue a chunk</a> algorithm with <var>enc</var> and <var>chunk</var>.
+ and runs the <a>encode and enqueue a chunk</a> algorithm with <b>this</b> and <var>chunk</var>.
 
  <li><p>Let <var>flushAlgorithm</var> be an algorithm which runs the <a>encode and flush</a>
- algorithm with <var>enc</var>.
+ algorithm with <b>this</b>.
 
  <li><p>Let <var>transform</var> be the result of calling
  <a abstract-op>CreateTransformStream</a>(<var>startAlgorithm</var>, <var>transformAlgorithm</var>,
  <var>flushAlgorithm</var>).
 
- <li><p>Set <var>enc</var>'s <a for=GenericTransformStream>transform</a> to <var>transform</var>.
-
- <li><p>Return <var>enc</var>.
+ <li><p>Set <b>this</b>'s <a for=GenericTransformStream>transform</a> to <var>transform</var>.
 </ol>
 
 <hr>
@@ -2212,16 +2188,14 @@ consumers of content generated with <a>GBK</a>'s <a for=/>encoder</a>.
    <li><p>Let <var>lead</var> be <a>gb18030 first</a>, let
    <var>pointer</var> be null, and set <a>gb18030 first</a> to 0x00.
 
-   <li><p>Let <var>offset</var> be 0x40 if <var>byte</var> is
-   less than 0x7F and 0x41 otherwise.
+   <li><p>Let <var>offset</var> be 0x40 if <var>byte</var> is less than 0x7F, otherwise 0x41.
 
    <li><p>If <var>byte</var> is in the range 0x40 to 0x7E, inclusive, or
    0x80 to 0xFE, inclusive, set <var>pointer</var> to
    (<var>lead</var> &minus; 0x81) × 190 + (<var>byte</var> &minus; <var>offset</var>).
 
-   <li><p>Let <var>code point</var> be null if
-   <var>pointer</var> is null and the <a>index code point</a>
-   for <var>pointer</var> in <a>index gb18030</a> otherwise.
+   <li><p>Let <var>code point</var> be null if <var>pointer</var> is null, otherwise the
+   <a>index code point</a> for <var>pointer</var> in <a>index gb18030</a>.
 
    <li><p>If <var>code point</var> is non-null, return a code point whose value is
    <var>code point</var>.
@@ -2279,8 +2253,8 @@ consumers of content generated with <a>GBK</a>'s <a for=/>encoder</a>.
 
    <li><p>Let <var>trail</var> be <var>pointer</var> % 190.
 
-   <li><p>Let <var>offset</var> be 0x40 if <var>trail</var> is
-   less than 0x3F<!--0x7F-0x40--> and 0x41 otherwise.
+   <li><p>Let <var>offset</var> be 0x40 if <var>trail</var> is less than 0x3F,<!--0x7F-0x40-->
+   otherwise 0x41.
 
    <li><p>Return two bytes whose values are <var>lead</var> and
    <var>trail</var> + <var>offset</var>.
@@ -2342,8 +2316,7 @@ consumers of content generated with <a>GBK</a>'s <a for=/>encoder</a>.
   <a>Big5 lead</a> to 0x00, and then:
 
   <ol>
-   <li><p>Let <var>offset</var> be 0x40 if <var>byte</var> is
-   less than 0x7F and 0x62 otherwise.
+   <li><p>Let <var>offset</var> be 0x40 if <var>byte</var> is less than 0x7F, otherwise 0x62.
    <!-- 0x62 = 0xA1-0x7E+1+0x40 -->
 
    <li><p>If <var>byte</var> is in the range 0x40 to 0x7E, inclusive, or
@@ -2367,9 +2340,8 @@ consumers of content generated with <a>GBK</a>'s <a for=/>encoder</a>.
     <p class=note>Since <a lt=index>indexes</a> are limited to
     single code points this table is used for these pointers.
 
-   <li><p>Let <var>code point</var> be null if
-   <var>pointer</var> is null and the <a>index code point</a>
-   for <var>pointer</var> in <a>index Big5</a> otherwise.
+   <li><p>Let <var>code point</var> be null if <var>pointer</var> is null, otherwise the
+   <a>index code point</a> for <var>pointer</var> in <a>index Big5</a>.
 
    <li><p>If <var>code point</var> is non-null, return a code point whose value is
    <var>code point</var>.
@@ -2412,8 +2384,8 @@ consumers of content generated with <a>GBK</a>'s <a for=/>encoder</a>.
 
  <li><p>Let <var>trail</var> be <var>pointer</var> % 157.
 
- <li><p>Let <var>offset</var> be 0x40 if <var>trail</var> is
- less than 0x3F<!--0x7F-0x40--> and 0x62<!--0xA1-0x3F--> otherwise.
+ <li><p>Let <var>offset</var> be 0x40 if <var>trail</var> is less than 0x3F,<!--0x7F-0x40-->
+ otherwise 0x62.<!--0xA1-0x3F-->
 
  <li><p>Return two bytes whose values are <var>lead</var> and
  <var>trail</var> + <var>offset</var>.
@@ -2459,12 +2431,11 @@ consumers of content generated with <a>GBK</a>'s <a for=/>encoder</a>.
   <ol>
    <li><p>Let <var>code point</var> be null.
 
-   <li><p>If <var>lead</var> and <var>byte</var> are both in the
-   range 0xA1 to 0xFE, inclusive, set <var>code point</var> to the
-   <a>index code point</a> for
+   <li><p>If <var>lead</var> and <var>byte</var> are both in the range 0xA1 to 0xFE, inclusive, then
+   set <var>code point</var> to the <a>index code point</a> for
    (<var>lead</var> &minus; 0xA1) × 94 + <var>byte</var> &minus; 0xA1
-   in <a>index jis0208</a> if the <a>EUC-JP jis0212 flag</a> is unset and in
-   <a>index jis0212</a> otherwise.
+   in <a>index jis0208</a> if the <a>EUC-JP jis0212 flag</a> is unset, otherwise
+   <a>index jis0212</a>.
 
    <li><p>Unset the <a>EUC-JP jis0212 flag</a>.
 
@@ -2731,8 +2702,8 @@ consumers of content generated with <a>GBK</a>'s <a for=/>encoder</a>.
 
      <li><p>Set the <a>ISO-2022-JP output flag</a>.
 
-     <li><p>Return <a>continue</a>, if <var>output flag</var> is unset, and
-     <a>error</a> otherwise.
+     <li><p>If the <var>output flag</var> is unset, then return <a>continue</a>; otherwise, return
+     <a>error</a>.
     </ol>
 
    <li><p><a>Prepend</a>
@@ -2877,11 +2848,9 @@ consumers of content generated with <a>GBK</a>'s <a for=/>encoder</a>.
   <var>pointer</var> be null, set <a>Shift_JIS lead</a> to 0x00, and then:
 
   <ol>
-   <li><p>Let <var>offset</var> be 0x40, if <var>byte</var> is
-   less than 0x7F, and 0x41 otherwise.
+   <li><p>Let <var>offset</var> be 0x40 if <var>byte</var> is less than 0x7F, otherwise 0x41.
 
-   <li><p>Let <var>lead offset</var> be 0x81, if <var>lead</var>
-   is less than 0xA0, and 0xC1 otherwise.
+   <li><p>Let <var>lead offset</var> be 0x81 if <var>lead</var> is less than 0xA0, otherwise 0xC1.
 
    <li><p>If <var>byte</var> is in the range 0x40 to 0x7E, inclusive, or
    0x80 to 0xFC, inclusive, set <var>pointer</var> to
@@ -2895,9 +2864,8 @@ consumers of content generated with <a>GBK</a>'s <a for=/>encoder</a>.
     <p class=note>This is interoperable legacy from Windows known as EUDC.
     <!-- PUA -->
 
-   <li><p>Let <var>code point</var> be null, if
-   <var>pointer</var> is null, and the <a>index code point</a>
-   for <var>pointer</var> in <a>index jis0208</a> otherwise.
+   <li><p>Let <var>code point</var> be null if <var>pointer</var> is null, otherwise the
+   <a>index code point</a> for <var>pointer</var> in <a>index jis0208</a>.
 
    <li><p>If <var>code point</var> is non-null, return a code point whose value is
    <var>code point</var>.
@@ -2953,14 +2921,12 @@ consumers of content generated with <a>GBK</a>'s <a for=/>encoder</a>.
 
  <li><p>Let <var>lead</var> be <var>pointer</var> / 188.
 
- <li><p>Let <var>lead offset</var> be 0x81, if <var>lead</var> is
- less than 0x1F, and 0xC1 otherwise.
+ <li><p>Let <var>lead offset</var> be 0x81 if <var>lead</var> is less than 0x1F, otherwise 0xC1.
  <!-- 0xA0-0x81 -->
 
  <li><p>Let <var>trail</var> be <var>pointer</var> % 188.
 
- <li><p>Let <var>offset</var> be 0x40, if <var>trail</var> is
- less than 0x3F, and 0x41 otherwise.
+ <li><p>Let <var>offset</var> be 0x40 if <var>trail</var> is less than 0x3F, otherwise 0x41.
 
  <li><p>Return two bytes whose values are
  <var>lead</var> + <var>lead offset</var> and
@@ -2998,9 +2964,8 @@ consumers of content generated with <a>GBK</a>'s <a for=/>encoder</a>.
    <var>pointer</var> to
    (<var>lead</var> &minus; 0x81) × 190 + (<var>byte</var> &minus; 0x41).
 
-   <li><p>Let <var>code point</var> be null, if <var>pointer</var> is null,
-   and the <a>index code point</a> for <var>pointer</var> in
-   <a>index EUC-KR</a> otherwise.
+   <li><p>Let <var>code point</var> be null if <var>pointer</var> is null, otherwise the
+   <a>index code point</a> for <var>pointer</var> in <a>index EUC-KR</a>.
 
    <li><p>If <var>code point</var> is non-null, return a code point whose value is
    <var>code point</var>.
@@ -3128,8 +3093,8 @@ and <var>byte</var>, runs these steps:
 
    <li><p>Let <var>byte2</var> be <var>code unit</var> &amp; 0x00FF.
 
-   <li><p>Let <var>bytes</var> be two bytes whose values are <var>byte1</var> and <var>byte2</var>,
-   if the <a>UTF-16BE decoder flag</a> is set, and <var>byte2</var> and <var>byte1</var> otherwise.
+   <li><p>Let <var>bytes</var> be two bytes whose values are <var>byte1</var> and <var>byte2</var>
+   if the <a>UTF-16BE decoder flag</a> is set, otherwise <var>byte2</var> and <var>byte1</var>.
 
    <li><p><a>Prepend</a> the <var>bytes</var> to
    <var>stream</var> and return <a>error</a>.
