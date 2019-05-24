@@ -1088,9 +1088,10 @@ false), and <dfn id=textdecoder-error-mode for=TextDecoderCommon>error mode</dfn
    <li><p>Let <var>token</var> be the result of <a>reading</a> from <var>stream</var>.
 
    <li>
-    <p>If <var>decocder</var>'s <a for=TextDecoderCommon>encoding</a> is <a>UTF-8</a>, <a>UTF-16BE</a>,
-    or <a>UTF-16LE</a>, and <var>decoder</var>'s <a for=TextDecoderCommon>ignore BOM</a> and
-    <a for=TextDecoderCommon>BOM seen</a> are false, then:
+    <p>If <var>decoder</var>'s <a for=TextDecoderCommon>encoding</a> is <a>UTF-8</a>,
+    <a>UTF-16BE</a>, or <a>UTF-16LE</a>, and <var>decoder</var>'s
+    <a for=TextDecoderCommon>ignore BOM</a> and <a for=TextDecoderCommon>BOM seen</a> are false,
+    then:
 
     <ol>
      <li><p>If <var>token</var> is U+FEFF, then set <var>decoder</var>'s
