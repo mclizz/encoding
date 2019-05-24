@@ -1071,12 +1071,12 @@ interface mixin TextDecoderCommon {
 {{TextDecoder}} and {{TextDecoderStream}} objects. These objects have an associated
 <dfn id=textdecoder-encoding for=TextDecoderCommon>encoding</dfn>,
 <dfn id=textdecoder-ignore-bom-flag for=TextDecoderCommon>ignore BOM</dfn> (boolean, initially
-unset), <dfn id=textdecoder-bom-seen-flag for=TextDecoderCommon>BOM seen</dfn> (boolean, initially
-unset), and <dfn id=textdecoder-error-mode for=TextDecoderCommon>error mode</dfn> (initially
+false), <dfn id=textdecoder-bom-seen-flag for=TextDecoderCommon>BOM seen</dfn> (boolean, initially
+false), and <dfn id=textdecoder-error-mode for=TextDecoderCommon>error mode</dfn> (initially
 "<code>replacement</code>").
 
 <p>The <dfn id=concept-td-serialize>serialize stream</dfn> algorithm, given a {{TextDecoderCommon}}
-<var>dec</var> and a <a for=/>stream</a> <var>stream</var>, runs these steps:
+<var>decoder</var> and a <a for=/>stream</a> <var>stream</var>, runs these steps:
 
 <ol>
  <li><p>Let <var>output</var> be the empty string.
@@ -1088,15 +1088,15 @@ unset), and <dfn id=textdecoder-error-mode for=TextDecoderCommon>error mode</dfn
    <li><p>Let <var>token</var> be the result of <a>reading</a> from <var>stream</var>.
 
    <li>
-    <p>If <var>dec</var>'s <a for=TextDecoderCommon>encoding</a> is <a>UTF-8</a>, <a>UTF-16BE</a>,
-    or <a>UTF-16LE</a>, and <var>dec</var>'s <a for=TextDecoderCommon>ignore BOM</a> and
+    <p>If <var>decocder</var>'s <a for=TextDecoderCommon>encoding</a> is <a>UTF-8</a>, <a>UTF-16BE</a>,
+    or <a>UTF-16LE</a>, and <var>decoder</var>'s <a for=TextDecoderCommon>ignore BOM</a> and
     <a for=TextDecoderCommon>BOM seen</a> are false, then:
 
     <ol>
-     <li><p>If <var>token</var> is U+FEFF, then set <var>dec</var>'s
+     <li><p>If <var>token</var> is U+FEFF, then set <var>decoder</var>'s
      <a for=TextDecoderCommon>BOM seen</a> to true.
 
-     <li><p>Otherwise, if <var>token</var> is not <a>end-of-stream</a>, set <var>dec</var>'s
+     <li><p>Otherwise, if <var>token</var> is not <a>end-of-stream</a>, set <var>decoder</var>'s
      <a for=TextDecoderCommon>BOM seen</a> to true and append <var>token</var> to <var>output</var>.
 
      <li><p>Otherwise, return <var>output</var>.
@@ -1117,7 +1117,7 @@ control.
 
 <p>The <dfn attribute id=dom-textdecoder-encoding for=TextDecoderCommon><code>encoding</code></dfn>
 attribute's getter must return <b>this</b>'s <a for=TextDecoderCommon>encoding</a>'s
-<a for=encoding>name</a> in <a>ASCII lowercase</a>.
+<a for=encoding>name</a>, <a>ASCII lowercased</a>.
 
 <p>The <dfn attribute id=dom-textdecoder-fatal for=TextDecoderCommon><code>fatal</code></dfn>
 attribute's getter must return true if <b>this</b>'s <a for=TextDecoderCommon>error mode</a> is
@@ -1245,7 +1245,7 @@ method, when invoked, must run these steps:
     <a for=TextDecoder>do not flush</a> is true, then return the result of running
     <a>serialize stream</a> with <b>this</b> and <var>output</var>.
 
-    <p class=note>The way streaming works is to not handle <a>end-of-stream</a> here when the
+    <p class=note>The way streaming works is to not handle <a>end-of-stream</a> here when
     <a for=TextDecoder>do not flush</a> is true and to not set it to false. That way in a subsequent
     invocation <a for=TextDecoder>decoder</a> is not set anew in the first step of the algorithm and
     its state is preserved.
@@ -1564,7 +1564,7 @@ byteReadable
 </ol>
 
 <p>The <dfn>decode and enqueue a chunk</dfn> algorithm, given a {{TextDecoderStream}} object
-<var>dec</var> and a <var>chunk</var>, runs these steps:
+<var>decoder</var> and a <var>chunk</var>, runs these steps:
 
 <ol>
  <li><p>Let <var>bufferSource</var> be the result of
@@ -1572,10 +1572,10 @@ byteReadable
  throws an exception, then return a promise rejected with that exception.
 
  <li><p><a>Push</a> a <a lt="get a copy of the buffer source">copy of</a> <var>bufferSource</var> to
- <var>dec</var>'s <a for=TextDecoderStream>stream</a>. If this throws an exception, then return a
+ <var>decoder</var>'s <a for=TextDecoderStream>stream</a>. If this throws an exception, then return a
  promise rejected with that exception.
 
- <li><p>Let <var>controller</var> be <var>dec</var>'s
+ <li><p>Let <var>controller</var> be <var>decoder</var>'s
  <a for=GenericTransformStream>transform</a>.\[[transformStreamController]].
 
  <li><p>Let <var>output</var> be a new <a for=/>stream</a>.
@@ -1584,14 +1584,14 @@ byteReadable
   <p>While true, run these steps:
 
   <ol>
-   <li><p>Let <var>token</var> be the result of <a>reading</a> from <var>dec</var>'s
+   <li><p>Let <var>token</var> be the result of <a>reading</a> from <var>decoder</var>'s
    <a for=TextDecoderStream>stream</a>.
 
    <li>
     <p>If <var>token</var> is <a>end-of-stream</a>, run these steps:
     <ol>
      <li><p>Let <var>outputChunk</var> be the result of running <a>serialize stream</a> with
-     <var>dec</var> and <var>output</var>.
+     <var>decoder</var> and <var>output</var>.
 
      <li><p>if <var>outputChunk</var> is non-empty, call
      <a abstract-op>TransformStreamDefaultControllerEnqueue</a>(<var>controller</var>,
@@ -1601,8 +1601,8 @@ byteReadable
     </ol>
 
    <li><p>Let <var>result</var> be the result of <a>processing</a> <var>token</var> for
-   <var>dec</var>'s <a for=TextDecoderStream>decoder</a>, <var>dec</var>'s
-   <a for=TextDecoderStream>stream</a>, <var>output</var>, and <var>dec</var>'s
+   <var>decoder</var>'s <a for=TextDecoderStream>decoder</a>, <var>decoder</var>'s
+   <a for=TextDecoderStream>stream</a>, <var>output</var>, and <var>decoder</var>'s
    <a for=TextDecoderCommon>error mode</a>.
 
    <li><p>If <var>result</var> is <a>error</a>, then return a new promise rejected with a
@@ -1611,22 +1611,23 @@ byteReadable
 </ol>
 
 <p>The <dfn>flush and enqueue</dfn> algorithm, which handles the end of data from the input
-{{ReadableStream}} object, given a {{TextDecoderStream}} object <var>dec</var>, runs these steps:
+{{ReadableStream}} object, given a {{TextDecoderStream}} object <var>decoder</var>, runs these
+steps:
 
 <ol>
  <li><p>Let <var>output</var> be a new <a for=/>stream</a>.
 
  <li><p>Let <var>result</var> be the result of <a>processing</a> <a>end-of-stream</a> for
- <var>dec</var>'s <a for=TextDecoderStream>decoder</a> and <var>dec</var>'s
- <a for=TextDecoderStream>stream</a>, <var>output</var>, and <var>dec</var>'s
+ <var>decoder</var>'s <a for=TextDecoderStream>decoder</a> and <var>decoder</var>'s
+ <a for=TextDecoderStream>stream</a>, <var>output</var>, and <var>decoder</var>'s
  <a for=TextDecoderCommon>error mode</a>.
 
  <li><p>If <var>result</var> is <a>finished</a>, run these steps:
  <ol>
   <li><p>Let <var>outputChunk</var> be the result of running <a>serialize stream</a> with
-  <var>dec</var> and <var>output</var>.
+  <var>decoder</var> and <var>output</var>.
 
-  <li><p>Let <var>controller</var> be <var>dec</var>'s
+  <li><p>Let <var>controller</var> be <var>decoder</var>'s
   <a for=GenericTransformStream>transform</a>.\[[transformStreamController]].
 
   <li><p>If <var>outputChunk</var> is non-empty, call
@@ -1710,7 +1711,7 @@ constructor, when invoked, must run these steps:
 <hr>
 
 <p>The <dfn>encode and enqueue a chunk</dfn> algorithm, given a {{TextEncoderStream}} object
-<var>enc</var> and <var>chunk</var>, runs these steps:
+<var>encoder</var> and <var>chunk</var>, runs these steps:
 
 <ol>
  <li><p>Let <var>input</var> be the result of <a lt="converted to an IDL value">converting</a>
@@ -1725,7 +1726,7 @@ constructor, when invoked, must run these steps:
 
  <li><p>Let <var>output</var> be a new <a for=/>stream</a>.
 
- <li><p>Let <var>controller</var> be <var>enc</var>'s
+ <li><p>Let <var>controller</var> be <var>encoder</var>'s
  <a for=GenericTransformStream>transform</a>.\[[transformStreamController]].
 
  <li>
@@ -1755,7 +1756,7 @@ constructor, when invoked, must run these steps:
     </ol>
 
    <li><p>Let <var>result</var> be the result of executing the <a>convert code unit to scalar
-   value</a> algorithm with <var>enc</var>, <var>token</var> and <var>input</var>.
+   value</a> algorithm with <var>encoder</var>, <var>token</var> and <var>input</var>.
 
    <li><p>If <var>result</var> is not <a>continue</a>, then <a>process</a> <var>result</var> for
    <a for=TextEncoderStream>encoder</a>, <var>input</var>, <var>output</var>.
@@ -1764,16 +1765,16 @@ constructor, when invoked, must run these steps:
 </ol>
 
 <p>The <dfn>convert code unit to scalar value</dfn> algorithm, given a {{TextEncoderStream}} object
-<var>enc</var>, <var>token</var>, and stream <var>input</var>, runs these steps:
+<var>encoder</var>, <var>token</var>, and stream <var>input</var>, runs these steps:
 
 <ol>
  <li>
-  <p>If <var>enc</var>'s <a>pending high surrogate</a> is non-null, run these steps:
+  <p>If <var>encoder</var>'s <a>pending high surrogate</a> is non-null, run these steps:
 
   <ol>
-   <li><p>Let <var>high surrogate</var> be <var>enc</var>'s <a>pending high surrogate</a>.
+   <li><p>Let <var>high surrogate</var> be <var>encoder</var>'s <a>pending high surrogate</a>.
 
-   <li><p>Set <var>enc</var>'s <a>pending high surrogate</a> to null.
+   <li><p>Set <var>encoder</var>'s <a>pending high surrogate</a> to null.
 
    <li><p>If <var>token</var> is in the range U+DC00 to U+DFFF, inclusive, then return a code point
    whose value is 0x10000 + ((<var>high surrogate</var> &minus; 0xD800) &lt;&lt; 10) +
@@ -1796,15 +1797,15 @@ constructor, when invoked, must run these steps:
 value string</a>" algorithm from the Infra Standard, but allows for surrogate pairs that are split
 between strings. [[!INFRA]]
 
-<p>The <dfn>encode and flush</dfn> algorithm, given a {{TextEncoderStream}} object <var>enc</var>,
-runs these steps:
+<p>The <dfn>encode and flush</dfn> algorithm, given a {{TextEncoderStream}} object
+<var>encoder</var>, runs these steps:
 
 <ol>
  <li>
-  <p>If <var>enc</var>'s <a>pending high surrogate</a> is non-null, run these steps:
+  <p>If <var>encoder</var>'s <a>pending high surrogate</a> is non-null, run these steps:
 
   <ol>
-   <li><p>Let <var>controller</var> be <var>enc</var>'s
+   <li><p>Let <var>controller</var> be <var>encoder</var>'s
    <a for=GenericTransformStream>transform</a>.\[[transformStreamController]].
 
    <li>
