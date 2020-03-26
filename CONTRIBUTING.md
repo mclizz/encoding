@@ -1,1 +1,1 @@
-Please see the [WHATWG Contributor Guidelines](https://github.com/whatwg/meta/blob/master/CONTRIBUTING.md).
+You Don't have to worry about it too much 
